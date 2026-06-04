@@ -184,16 +184,21 @@ environment:
 
 **What to look for:**
 
-- Overly permissive `permissions` blocks in GitHub Actions (or absence of permissions, which defaults to read-write).
+- Overly permissive `permissions` blocks in GitHub Actions.
+- Absence of a workflow or job `permissions` block when the repository, organization, or enterprise default workflow permission is unknown.
 - Use of `permissions: write-all` or top-level write permissions without scoping.
 - Shared service accounts across environments.
 - Missing `CODEOWNERS` file or broad ownership patterns.
 - Workflows that do not pin the `GITHUB_TOKEN` to minimum required permissions.
+- `pull_request_target` workflows that do not explicitly reduce `GITHUB_TOKEN` permissions.
 
 **Specific patterns in GitHub Actions:**
 
 ```yaml
-# BAD: No permissions block (defaults to read-write for everything)
+# NOT EVALUABLE FROM CONFIG: No permissions block.
+# Effective token scope inherits enterprise, organization, or repository default
+# workflow permissions. Request platform settings evidence before reporting a
+# definite read/write token exposure.
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -201,13 +206,36 @@ jobs:
 # BAD: Overly broad permissions
 permissions: write-all
 
+# BAD: pull_request_target without explicit token reduction
+on: pull_request_target
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh pr edit "$PR_URL" --add-label needs-triage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+
 # GOOD: Least-privilege permissions
 permissions:
   contents: read
   packages: write
 ```
 
-**Finding format:** Report the effective permission model, whether least-privilege is enforced, and whether identity controls (CODEOWNERS, required reviewers) are in place.
+**GitHub Actions permission evidence table:** For every GitHub Actions review, report these fields before deciding whether CICD-SEC-2 is a pass, fail, partial, or not evaluable finding.
+
+| Evidence field | Pass | Fail | Not Evaluable from Config |
+|----------------|------|------|---------------------------|
+| Platform default workflow permission | Repository, organization, or enterprise default is verified as read-only | Default is verified as read/write | Platform default was not provided or cannot be inferred from workflow YAML |
+| Top-level workflow `permissions` | Explicitly scoped to least privilege | `write-all` or broad write scopes without need | Missing and platform default is unknown |
+| Job-level `permissions` | Each job has only the scopes it needs | Job expands to broad write scopes without need | Missing and inherited effective scope is unknown |
+| `pull_request_target` permission reduction | Trigger is absent, or token is explicitly reduced to minimum required scopes | Trigger is present and no explicit `permissions` block reduces the read/write default | Trigger is present but effective job token scope cannot be determined |
+
+**Important nuance:** A missing `permissions` block is a least-privilege hygiene gap, but it is not always proof of read/write exposure. GitHub calculates the `GITHUB_TOKEN` permissions from enterprise, organization, or repository defaults, then applies workflow and job-level `permissions`. Treat missing YAML permissions as "Not Evaluable from Config" unless platform defaults are known. Keep `permissions: write-all`, unnecessary write scopes, and unscoped `pull_request_target` workflows as true findings.
+
+**Finding format:** Report the effective permission model, the evidence source for platform defaults, whether least-privilege is enforced, whether unknown values are "Not Evaluable from Config," and whether identity controls (CODEOWNERS, required reviewers) are in place.
 
 ---
 
@@ -550,6 +578,8 @@ This skill processes user-supplied content including CI/CD configuration files, 
 - SLSA Build Track: https://slsa.dev/spec/v1.0/levels#build-track
 - OWASP Top 10 CI/CD Security Risks: https://owasp.org/www-project-top-10-ci-cd-security-risks/
 - GitHub Actions Security Hardening: https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions
+- GitHub Actions Workflow Syntax -- Permissions: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions
+- GitHub Actions Events -- `pull_request_target`: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target
 - Sigstore / Cosign: https://docs.sigstore.dev/
 - SLSA GitHub Generator: https://github.com/slsa-framework/slsa-github-generator
 
@@ -557,4 +587,5 @@ This skill processes user-supplied content including CI/CD configuration files, 
 
 ## Changelog
 
+- **1.0.1** -- Corrected GitHub Actions `GITHUB_TOKEN` default-permission guidance. Missing workflow `permissions` is now treated as platform-default dependent, unknown defaults are "Not Evaluable from Config," explicit broad write scopes remain true findings, and `pull_request_target` requires explicit token reduction evidence.
 - **1.0.0** -- Initial release. Full coverage of SLSA v1.0 build track and OWASP Top 10 CI/CD Security Risks (CICD-SEC-1 through CICD-SEC-10).
