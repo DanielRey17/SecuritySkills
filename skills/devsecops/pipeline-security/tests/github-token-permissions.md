@@ -56,7 +56,34 @@ Expected classification:
 - Severity: Informational hygiene recommendation
 - Rationale: Effective default is read-only, but explicit job-level least privilege is still clearer.
 
-## Fixture 3: Explicit write-all
+## Fixture 3: Missing permissions with verified read/write default
+
+```yaml
+name: release
+on: push
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/publish.sh
+```
+
+Platform evidence:
+
+```text
+repository_default_workflow_permission: read and write permissions
+organization_default_workflow_permission: read and write permissions
+enterprise_default_workflow_permission: read and write permissions
+```
+
+Expected classification:
+
+- CICD-SEC-2 status: `Fail`
+- Severity: High unless the workflow is explicitly narrowed before privileged steps run
+- Rationale: Missing YAML `permissions` inherits a verified read/write platform default, so this is no longer merely "Not Evaluable from Config."
+
+## Fixture 4: Explicit write-all
 
 ```yaml
 name: release
@@ -76,7 +103,7 @@ Expected classification:
 - Severity: High unless every write scope is justified
 - Rationale: `write-all` grants every available write scope and should be replaced with job-level least privilege.
 
-## Fixture 4: pull_request_target without explicit token reduction
+## Fixture 5: pull_request_target without explicit token reduction
 
 ```yaml
 name: label
@@ -97,7 +124,7 @@ Expected classification:
 - Severity: High
 - Rationale: `pull_request_target` receives read/write repository permission unless the workflow reduces the token with `permissions`.
 
-## Fixture 5: pull_request_target with reduced token
+## Fixture 6: pull_request_target with reduced token
 
 ```yaml
 name: label
@@ -120,4 +147,3 @@ Expected classification:
 - CICD-SEC-2 status: `Pass` or `Partial`
 - Severity: Low if the write scope is required and PR code is not checked out or executed
 - Rationale: The workflow uses the risky trigger but explicitly narrows token scope to the operation it performs.
-

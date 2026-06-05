@@ -185,7 +185,7 @@ environment:
 **What to look for:**
 
 - Overly permissive `permissions` blocks in GitHub Actions.
-- Absence of a workflow or job `permissions` block when the repository, organization, or enterprise default workflow permission is unknown.
+- Absence of a workflow or job `permissions` block when the repository, organization, or enterprise default workflow permission is unknown or verified as read/write.
 - Use of `permissions: write-all` or top-level write permissions without scoping.
 - Shared service accounts across environments.
 - Missing `CODEOWNERS` file or broad ownership patterns.
@@ -205,6 +205,13 @@ jobs:
 
 # BAD: Overly broad permissions
 permissions: write-all
+
+# BAD: No permissions block with a verified read/write platform default
+# Effective token scope inherits that broad default until the workflow or job
+# explicitly narrows it.
+jobs:
+  release:
+    runs-on: ubuntu-latest
 
 # BAD: pull_request_target without explicit token reduction
 on: pull_request_target
@@ -233,7 +240,7 @@ permissions:
 | Job-level `permissions` | Each job has only the scopes it needs | Job expands to broad write scopes without need | Missing and inherited effective scope is unknown |
 | `pull_request_target` permission reduction | Trigger is absent, or token is explicitly reduced to minimum required scopes | Trigger is present and no explicit `permissions` block reduces the read/write default | Trigger is present but effective job token scope cannot be determined |
 
-**Important nuance:** A missing `permissions` block is a least-privilege hygiene gap, but it is not always proof of read/write exposure. GitHub calculates the `GITHUB_TOKEN` permissions from enterprise, organization, or repository defaults, then applies workflow and job-level `permissions`. Treat missing YAML permissions as "Not Evaluable from Config" unless platform defaults are known. Keep `permissions: write-all`, unnecessary write scopes, and unscoped `pull_request_target` workflows as true findings.
+**Important nuance:** A missing `permissions` block is a least-privilege hygiene gap, but it is not always proof of read/write exposure. GitHub calculates the `GITHUB_TOKEN` permissions from enterprise, organization, or repository defaults, then applies workflow and job-level `permissions`. Treat missing YAML permissions as "Not Evaluable from Config" unless platform defaults are known. If the platform default is verified as read/write, report the missing block as a real broad-token finding. When a workflow or job declares `permissions`, unspecified permissions are set to no access except for required metadata access, so evaluate the declared scopes rather than assuming every scope remains inherited. Keep `permissions: write-all`, unnecessary write scopes, and unscoped `pull_request_target` workflows as true findings.
 
 **Finding format:** Report the effective permission model, the evidence source for platform defaults, whether least-privilege is enforced, whether unknown values are "Not Evaluable from Config," and whether identity controls (CODEOWNERS, required reviewers) are in place.
 
