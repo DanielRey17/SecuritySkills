@@ -1,0 +1,13 @@
+{
+  "name": "Puebla Transit",
+  "short_name": "PueTransit",
+  "description": "Mapa experimental de rutas M2 y S3 de Puebla con ubicación GPS.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#111827",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
