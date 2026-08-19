@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Puebla Transit · M2 / S3</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PUEBLA · M2 / S3</p>
+        <h1>Puebla Transit</h1>
+      </div>
+      <button id="infoBtn" class="icon-btn" type="button" aria-label="Información">i</button>
+    </header>
+
+    <main>
+      <section class="controls" aria-label="Filtros de ruta">
+        <button class="route-chip active" data-route="all" type="button">Todas</button>
+        <button class="route-chip m2" data-route="m2" type="button"><span></span>M2</button>
+        <button class="route-chip s3" data-route="s3" type="button"><span></span>S3</button>
+        <button id="fitBtn" class="route-chip secondary" type="button">Ver rutas</button>
+      </section>
+
+      <section class="map-wrap">
+        <div id="map" role="application" aria-label="Mapa de rutas M2 y S3 en Puebla"></div>
+        <div class="map-actions">
+          <button id="locateBtn" class="float-btn primary" type="button" aria-label="Usar mi ubicación">⌖</button>
+          <button id="followBtn" class="float-btn" type="button" aria-label="Seguir mi ubicación">◎</button>
+        </div>
+        <div id="gpsBadge" class="gps-badge">GPS apagado</div>
+      </section>
+
+      <section class="status-card" aria-live="polite">
+        <div class="status-head">
+          <div>
+            <p class="label">TU POSICIÓN</p>
+            <h2 id="statusTitle">Activa tu ubicación</h2>
+          </div>
+          <span id="accuracyBadge" class="pill">—</span>
+        </div>
+        <p id="statusText" class="muted">El navegador usará el GPS del teléfono para mostrarte sobre el mapa.</p>
+        <div class="metrics">
+          <div>
+            <span>Ruta cercana</span>
+            <strong id="nearestRoute">—</strong>
+          </div>
+          <div>
+            <span>Distancia</span>
+            <strong id="nearestDistance">—</strong>
+          </div>
+          <div>
+            <span>GPS</span>
+            <strong id="gpsState">Off</strong>
+          </div>
+        </div>
+        <button id="googleBtn" class="cta" type="button" disabled>Abrir punto cercano en Google Maps</button>
+      </section>
+
+      <section class="route-cards">
+        <article class="route-card">
+          <div class="route-line m2-bg"></div>
+          <div>
+            <div class="route-title-row"><h3>M2</h3><span>Todos los días</span></div>
+            <p>San Pedro Zacachimalpa ↔ Centro · circuito</p>
+            <p class="hours"><strong>Primer viaje aprox. 06:00</strong> · Último viaje aprox. 22:00</p>
+          </div>
+        </article>
+        <article class="route-card">
+          <div class="route-line s3-bg"></div>
+          <div>
+            <div class="route-title-row"><h3>S3</h3><span>Todos los días</span></div>
+            <p>La Cruz / Tetela ↔ Centro · circuito</p>
+            <p class="hours"><strong>Primer viaje aprox. 06:00</strong> · Último viaje aprox. 22:00</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="infoDialog">
+    <div class="dialog-head">
+      <div>
+        <p class="eyebrow">ACERCA DEL PROTOTIPO</p>
+        <h2>Puebla Transit v0</h2>
+      </div>
+      <button id="closeInfo" class="icon-btn" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <p><strong>GPS:</strong> usa la ubicación del navegador. En iPhone requiere permiso de ubicación y una página HTTPS.</p>
+    <p><strong>Horarios:</strong> M2 y S3 aparecen publicadas con servicio aproximado de 06:00 a 22:00 todos los días. El último horario no significa que una unidad vaya a pasar por todos los puntos exactamente a las 22:00.</p>
+    <p><strong>M2/S3:</strong> el trazado de esta v0 es una reconstrucción provisional basada en la secuencia de calles y referencias públicas de Moovit y fuentes locales. No debe tratarse todavía como cartografía oficial parada por parada.</p>
+    <p><strong>Siguiente fase:</strong> sustituir estas geometrías por GeoJSON validado en campo o por un feed autorizado, añadir paradas exactas y más rutas.</p>
+    <small>Mapa base © OpenStreetMap contributors.</small>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="data/routes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
